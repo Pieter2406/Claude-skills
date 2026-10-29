@@ -41,13 +41,21 @@ Deleting anything (an app, a database, a repo) always needs its own explicit yes
 1. Choose the names: `<sub>` is the subdomain from the spec, `<repo>` is usually the same (lowercase, dashes).
    Check the address is free (`node <skill-dir>/scripts/list_apps.mjs`, plus the DNS check in
    `references/cloudflare.md` §2).
-2. Create the repo: `mcp__github__create_repository` with `name: <repo>`, `private: true`, a one-line description, no
-   auto-init. In a cloud session, then call `mcp__claude-code-remote__add_repo` (owner `Pieter2406`, access `push`) so
-   pushes are allowed, and follow its clone instructions. Otherwise `git init` in the app folder and add the remote.
-3. Scaffold into the clone (it must be empty apart from `.git`):
+2. Make the app folder a git repo right away (`git init -b main`), so building never waits on GitHub.
+3. Create the GitHub repo. Try `mcp__github__create_repository` (`name: <repo>`, `private: true`, one-line description,
+   no auto-init). The Claude GitHub app is usually **not allowed to create repositories** (`403 Resource not accessible
+   by integration`). Then ask Pieter, in one short message, to create it and keep building while you wait:
+   - go to https://github.com/new, name `<repo>`, **Private**, no README/.gitignore/licence, Create;
+   - if the Claude GitHub app is installed for selected repositories only, add `<repo>` to it
+     (https://github.com/settings/installations → Claude → Configure → Repository access).
+
+   Once it exists, call `mcp__claude-code-remote__add_repo` (owner `Pieter2406`, repo `<repo>`, access `push`), add the
+   remote it gives you to the app folder (`git remote add origin …`), and push. If add_repo still refuses, relay its
+   reason, finish the deploy anyway, and push when access is fixed.
+4. Scaffold into the app folder (it must be empty apart from `.git`):
    ```bash
-   node <skill-dir>/scripts/scaffold.mjs --dir <clone> --name <worker-name> --sub <sub> --title "<App title>" --lang <nl|en> [--public] [--d1] [--room]
-   cd <clone> && npm install
+   node <skill-dir>/scripts/scaffold.mjs --dir <app-dir> --name <worker-name> --sub <sub> --title "<App title>" --lang <nl|en> [--public] [--d1] [--room]
+   cd <app-dir> && npm install
    ```
    Pick the flags with the table in `references/build.md`. `<worker-name>` is usually `<sub>`; add a random suffix for
    apps whose address should be hard to guess.
@@ -58,11 +66,11 @@ Read `references/build.md`. In short: design the one screen that matters most fi
 (palette, type and one visual idea, all as CSS tokens with a dark mode), keep it robust and accessible, and test it
 like a user would:
 
-- `bash <skill-dir>/scripts/dev.sh start <clone>` (prints the local URL; `stop` when done);
+- `bash <skill-dir>/scripts/dev.sh start <app-dir>` (prints the local URL; `stop` when done);
 - click through the core flow with Playwright, one browser context per role for shared or live apps, and screenshot
   every important state (phone and, where it matters, tablet/TV; light and dark); look at every screenshot;
 - `node <skill-dir>/scripts/shoot.mjs <url> <scratch>/shots` for errors, sideways scrolling and small tap targets;
-- `node <skill-dir>/scripts/make_icon.mjs <clone>` after designing `public/icon.svg`.
+- `node <skill-dir>/scripts/make_icon.mjs <app-dir>` after designing `public/icon.svg`.
 
 Replace the template's placeholders with the real app, and don't leave unused template code behind:
 - `index.html` body, the `style.css` tokens (palette, font), `app.js`;
