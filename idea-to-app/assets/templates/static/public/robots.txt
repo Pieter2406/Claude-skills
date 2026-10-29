@@ -1,0 +1,7 @@
+#if unlisted
+User-agent: *
+Disallow: /
+#else
+User-agent: *
+Allow: /
+#endif

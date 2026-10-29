@@ -1,0 +1,4 @@
+*.zip
+*.skill
+.cloudflare/
+node_modules/

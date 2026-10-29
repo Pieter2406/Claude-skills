@@ -1,0 +1,28 @@
+/* Design tokens first: every colour is a token, redefined for dark mode, so the whole app themes at once.
+   Replace these with the app's own palette and type; keep the structure.
+   (If the app gets a light/dark toggle, repeat the dark block under :root[data-theme="dark"].) */
+:root {
+  --bg: #f6f4ef; --surface: #ffffff; --ink: #1d1b18; --muted: #6b665d; --line: #e4dfd4;
+  --accent: #1f6f5c; --accent-ink: #ffffff; --danger: #b3412a;
+  --radius: 14px; --gutter: 16px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #151413; --surface: #1f1d1b; --ink: #f1ede6; --muted: #aaa397; --line: #34312c;
+    --accent: #5cc4a6; --accent-ink: #0d1f1a; --danger: #f08a6c;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.app { max-width: 720px; margin: 0 auto; padding: 20px var(--gutter) 48px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { min-height: 44px; padding: 10px 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; touch-action: manipulation; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
