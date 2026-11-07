@@ -1,50 +1,56 @@
-# End-to-end recipes and pitfalls
+# End-to-end scenarios and pitfalls
 
-`scripts/e2e-kit.cjs` (CommonJS, Playwright) gives: `phone(browser, opts)` → `{ ctx, page, errors }` with a phone
-device, time zone, geolocation and an error collector (page errors + every HTTP ≥ 400 with method and URL);
-`check(name, cond)` that prints PASS/FAIL and counts; `shot(page, file)`; `done(browser)` that prints errors and
-exits non-zero on any FAIL. Copy it next to your test script or `require` it by path.
+The scenarios in SKILL.md phase 4 apply to every kind of app; `app-types.md` says how to drive each kind. This file
+has the reusable recipes and the mistakes that cost time.
+
+## Browser helpers
+
+`scripts/e2e-kit.cjs` (CommonJS, Playwright):
 
 ```js
 const { chromium } = require('playwright');
-const { phone, check, shot, done } = require('<skill>/scripts/e2e-kit.cjs');
+const { open, check, shot, done } = require('<skill>/scripts/e2e-kit.cjs');
 (async () => {
   const b = await chromium.launch();
-  const A = await phone(b, { device: 'iPhone 13', tag: 'A' });
-  const B = await phone(b, { device: 'Pixel 7', tag: 'B' });
-  await A.page.goto('http://localhost:8787/');
-  // ... drive, check(...), shot(A.page, dir + '/a-1.png') ...
-  await done(b, [A, B]);
+  const A = await open(b, { device: 'iPhone 13', tag: 'A' });             // a phone
+  const B = await open(b, { viewport: { width: 1280, height: 800 }, tag: 'B' }); // a desktop
+  await A.page.goto('<local url>');
+  // ... drive the UI, check('what', condition), shot(A.page, '<dir>/a-1.png') ...
+  await done(b, [A, B]); // prints collected errors, exits 1 on any FAIL or error
 })();
 ```
 
+Options of `open`: `device` (a Playwright device name) or `viewport`, `tz` (time zone; default: the machine's),
+`locale`, `geo` ({latitude, longitude}), `time` (fake clock start), `scheme` ('light' | 'dark'), `tag`.
+
 ## Recipes
 
-- **Shared state, two devices**: two browser contexts (separate storage), the second joins through the app's own
-  share link or code. Reload or wait for the poll before checking the other side.
-- **Offline**: `ctx.setOffline(true)`, do the actions, check the app's local queue (localStorage/IndexedDB), then
-  `ctx.setOffline(false)`, trigger the app's resync (reload, `online` event, or its poll), and read the server state
-  through the app's own API with `page.evaluate(fetch…)`.
-- **Old data**: before `goto`, `ctx.addInitScript` to write localStorage in the old format, or send an old-style
-  action to the API, then open the new screens.
-- **Live data that changes**: `ctx.route('**/api/<feed>', …)` to fetch the real response and patch it (everything
-  open, fixed wait times) so the scenario is the same every run.
-- **Time**: `page.clock.install({ time })` before `goto`, `page.clock.fastForward('12:00')` to let minutes pass.
-- **Screenshots**: deviceScaleFactor 1 for ones only you look at; read every one (combine several into one image with
-  PIL to save turns). Check both themes when the app has light and dark.
+- **Shared state, two users/devices**: two contexts/clients with separate storage and identities; the second joins the
+  way real users do (invite link, login, code). Wait for the app's sync (poll, push, reload) before checking.
+- **Interruption**: browser `ctx.setOffline(true/false)`; for services, stop the dependency or point it at a dead port;
+  for processes, kill mid-run. Then check what the server/store ended up with, not only what the UI says.
+- **Previous version's data**: check out the last release in a worktree, run it once to produce real data, then run
+  the new version on that data. Cheaper: write the old format by hand from the old code.
+- **Changing external data** (feeds, prices, statuses): intercept and pin it (Playwright `route`, a stub server, a
+  fixture) so the run is repeatable; keep one run against the real feed if it's safe and read-only.
+- **Time**: fake the clock in the client (`page.clock`) or inject a clock in the service; fast-forward instead of
+  sleeping.
+- **Evidence**: look at every screenshot/response you take; combine several screenshots into one image (PIL) to save
+  turns; screenshot at scale 1 for checks only you read.
 
 ## Pitfalls already hit
 
-- **Fake clock vs real server.** A browser clock in the future makes the server ignore or clamp client timestamps
-  (e.g. "within now − 12 h … now + 2 min"), so durations come out wrong. Install the clock slightly in the **past**
-  (now − 20…40 min) and fast-forward from there, never past the real time.
-- **The fake clock drives the theme too**: a "dark after sunset" app looks dark at a fake 07:30. That's correct.
-- **Hidden duplicates**: `[data-x]` may first match a hidden element (a map pin behind a list). Scope the selector to
-  the visible pane or use `:visible`.
-- **Plan/choice randomness**: the first suggestion may not be the case you want (a split where one half rests has no
-  queue). Pick the case explicitly by its text/attributes and log which one you got.
-- **Fixtures older than the state they act on**: a unit test that sets a target "1 minute ago" and then acts "30
-  minutes ago" is ignored as a late replay. When a new test fails, check the fixture times first.
-- **`pkill -f pattern`** also kills your own shell if the pattern is in the command line; kill dev servers by PID or a
-  pattern that isn't in the same command.
-- Sheets/dialogs that re-render reset their scroll: after an answer, the result may sit off screen. Screenshot it.
+- **Client clock ahead of the server.** Servers often clamp or ignore client timestamps in the future, so durations come
+  out wrong. Start a fake client clock slightly in the **past** and fast-forward from there, never past real time.
+- **A fake clock changes time-dependent UI** (themes by time of day, opening hours, greetings). Expect it; don't "fix"
+  the app for it.
+- **Selectors that match hidden elements**: scope to the visible container or use `:visible`.
+- **Random or ranked choices**: the first item the app offers may not be the case you want to test. Pick the case
+  explicitly and log which one you got.
+- **Unit-test fixtures older than the state they act on** are silently treated as stale. When a new test fails, check
+  the fixture times and order first.
+- **Killing dev servers with `pkill -f <pattern>`** also kills your own shell when the pattern is in the same command
+  line; use a PID or a separate command.
+- **Dialogs or lists that re-render reset their scroll**: the result may be off screen. Look at the screenshot.
+- **A role or identity that isn't set** (who am I, which tenant, which device) often silently picks the first one.
+  Test once without it.

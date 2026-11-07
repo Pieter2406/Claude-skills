@@ -1,10 +1,11 @@
-// Small helpers for end-to-end runs with Playwright at phone size. CommonJS so a plain `node test.js` can require it.
-//   const { phone, check, shot, done } = require('./e2e-kit.cjs');
-// phone(browser, { device, tag, tz, geo, time })  → { ctx, page, errors }: a phone context (default iPhone 13,
-//   Europe/Brussels), optional geolocation {latitude, longitude} and fake clock start (Date or ms). Page errors and
-//   every HTTP response ≥ 400 are collected as "<tag> <status> <METHOD> <url>".
-// check(name, cond) prints PASS/FAIL and counts failures; shot(page, file) saves a screenshot (scale 1);
-// done(browser, phones) prints the collected errors, closes the browser and exits 1 on any FAIL or error.
+// Helpers for end-to-end runs of browser apps with Playwright. App-agnostic; CommonJS so `node test.js` can require it.
+//   const { open, check, shot, done } = require('./e2e-kit.cjs');
+// open(browser, opts) → { ctx, page, errors, tag }: a new context (separate storage = a separate user/device).
+//   opts: device (Playwright device name) or viewport {width, height}; tz (IANA zone, default the machine's);
+//   locale; geo {latitude, longitude}; time (fake clock start, Date or ms); scheme 'light'|'dark'; tag (label in logs).
+//   Page errors and every HTTP response ≥ 400 are collected as "<tag> <status> <METHOD> <url>".
+// check(name, cond) prints PASS/FAIL and counts failures; shot(page, file) saves a screenshot;
+// done(browser, sessions) prints the collected errors, closes the browser, exits 1 on any FAIL or error.
 const { devices } = require('playwright');
 
 let fails = 0;
@@ -14,10 +15,14 @@ function check(name, cond) {
   return !!cond;
 }
 
-async function phone(browser, { device = 'iPhone 13', tag = 'P', tz = 'Europe/Brussels', geo = null, time = null } = {}) {
+async function open(browser, { device, viewport, tz, locale, geo, time, scheme, tag = 'S' } = {}) {
+  if (device && !devices[device]) throw new Error(`unknown device "${device}"`);
   const ctx = await browser.newContext({
-    ...devices[device],
-    timezoneId: tz,
+    ...(device ? devices[device] : {}),
+    ...(viewport ? { viewport } : {}),
+    ...(tz ? { timezoneId: tz } : {}),
+    ...(locale ? { locale } : {}),
+    ...(scheme ? { colorScheme: scheme } : {}),
     ...(geo ? { geolocation: geo, permissions: ['geolocation'] } : {}),
   });
   const page = await ctx.newPage();
@@ -35,11 +40,11 @@ async function shot(page, file) {
   return file;
 }
 
-async function done(browser, phones = []) {
-  const errors = phones.flatMap((p) => p.errors);
+async function done(browser, sessions = []) {
+  const errors = sessions.flatMap((s) => s.errors);
   console.log(errors.length ? errors.join('\n') : 'no errors');
   await browser.close();
   if (fails || errors.length) process.exit(1);
 }
 
-module.exports = { phone, check, shot, done };
+module.exports = { open, check, shot, done };
