@@ -48,6 +48,9 @@ Keep the user posted in one line per phase. Never leave work uncommitted at the 
 3. **Implement each item through the project's process**: requirement rows, logic in the platform-free core, UI on
    top, unit tests for the logic, e2e tests for what a user does. Reproduce a bug in a failing test before fixing it.
    When a test fails, first suspect the test (fixture, overlapping rooms, missing element), then the app.
+   Tests must be able to fail: no assertions behind `if (await x.count())`, no checks that hold whatever the app does
+   (an optional group in a regex, `>=` the old value, only the first of n rows). When the test data lacks the case,
+   create it in the test. For every bug fix, remove the fix once and watch its test fail, then put it back.
 4. **Look at the result.** Screenshot the changed screens (light and dark) and read them. Fix what looks wrong:
    clipped text, spacing, a font feature with side effects, contrast.
 5. **Independent review.** Start a background reviewer agent on the round's diff (`git diff <last pushed>..` or the
