@@ -32,6 +32,9 @@ sections, feature list header, the review log entry describing the intent>.
 
 The changes: <one paragraph listing the modules and what each change does>.
 
+Who uses it: <one paragraph from the project's persona file, e.g. docs/doelgroep.md>. Besides defects, report text
+that user would not understand (jargon without explanation, a message without why or what to do next).
+
 Look for real defects: <the risky parts of this round: maths, rotation/geometry, other code paths that match the
 new data, layout effects of global CSS rules, contrast, hook misuse, performance of code that runs on every edit,
 requirement rows that claim more than the code does>. You may run read-only commands (typecheck, single unit test
@@ -44,7 +47,7 @@ what you checked and found fine; say plainly if nothing significant. Under ~500 
 
 A small `.cjs` script in the scratchpad: launch Chromium, set the app's storage (which data file to open) with
 `addInitScript`, visit every route, wait for network idle plus ~1 s, screenshot, and collect console errors and page
-errors. Run it for `colorScheme: 'light'` and `'dark'` at the app's main width. For deeper states (a selected item,
+errors. Run it for `colorScheme: 'light'` and `'dark'` at the app's main width, and at phone width when the persona uses a phone. For deeper states (a selected item,
 an open list, a simulation) script the clicks the user would make. Read every screenshot; a screenshot nobody looks
 at finds nothing.
 
