@@ -57,11 +57,14 @@ Keep the user posted in one line per phase. Never leave work uncommitted at the 
    smallest change, reword requirements that claimed too much, and note what you leave and why.
 7. **Full regression.** Typecheck, all unit tests, all e2e tests (and the dark/other projects), the list checker.
    Run them as separate commands so one red step does not skip the rest. Everything green except the documented
-   baseline failures.
+   baseline failures. Read the checkers' problem lines, not only their totals: a list checker can print correct
+   counts and still report "listed twice" or "claims it - set it to yes" below them.
 8. **Document.** Feature list rows, glossary terms, README usage lines, the product/data sources doc, and a review
    log (`docs/review-<date>.md`) with a table per round: number, severity, problem, fix, requirement IDs.
 9. **Commit and push.** One commit per round (or per review fix-up), a message that lists what changed and why.
-   Clean up temporary data copies first. Check `git status` is clean afterwards.
+   Clean up temporary data copies first. Check `git status` is clean afterwards. If the reviewer is still running at
+   the end of a turn, commit and push what is green now and put its fixes in a follow-up commit.
+   Also check the tests clean up after themselves (no test copies piling up in data folders).
 10. **Report** (see below) and offer the next round with two or three concrete candidates.
 
 ## What a good round contains
