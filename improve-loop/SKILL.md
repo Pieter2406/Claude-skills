@@ -14,6 +14,16 @@ Keep the user posted in one line per phase. Never leave work uncommitted at the 
 
 ## 0. Ground rules
 
+- **The persona sets the goal.** Look for the project's persona file: `docs/doelgroep.md`, `docs/persona.md`,
+  or whatever CLAUDE.md or the README names. Read it at the start of **every** round, not only the first: it says
+  who uses the app, what they know and don't, and what "better" means for them. Every round then carries at least
+  one item that serves that persona, screenshots are read with that user's eyes, and the reviewer gets the persona
+  too. If the user describes their audience or a goal and there is no such file yet, write one with
+  `references/persona-template.md`, point CLAUDE.md at it and commit it, so the next loop starts from it.
+- **Take on the domain expertise the persona needs.** When the persona asks for it (an electrical code, a
+  protocol, a trade), review as that expert explaining to a layperson: find what is already encoded in the
+  project (docs, rule code, research reports) before adding anything; verify every rule, number and article
+  against the primary source and record the source; when unsure, leave it out or call it a rule of thumb.
 - **The project's own rules win.** Read CLAUDE.md, README and the project's skills first. If the project has a
   feature list or a bug/feature skill (for example `knx-feature` / `knx-bug` with `docs/features.md`), every change in
   the loop goes through it: requirements first, tests that claim them, the list checker green.
@@ -38,7 +48,7 @@ Keep the user posted in one line per phase. Never leave work uncommitted at the 
 
 ## 2. Every round
 
-1. **Pick the work.** From the screenshots, the audit, the previous review, the user's goals and the backlog
+1. **Pick the work.** From the persona, the screenshots, the audit, the previous review, the user's goals and the backlog
    (`--todo` of the feature list, open findings), choose a handful of items by value: correctness bugs, then what
    the user named as focus, then UX/a11y problems, then polish and new features. Prefer removing and restructuring
    over adding. Say what you picked in one line.
@@ -94,3 +104,5 @@ Keep the user posted in one line per phase. Never leave work uncommitted at the 
 
 - [`references/briefs.md`](references/briefs.md) - the prompts for the research agent and the reviewer agent, and
   the screenshot script pattern.
+- [`references/persona-template.md`](references/persona-template.md) - the shape of a project persona file, and the
+  questions a round asks with it.
