@@ -68,7 +68,12 @@ Keep the user posted in one line per phase. Never leave work uncommitted at the 
    or do the next small item - not the same files.
 6. **Triage the review.** Its findings are claims: reproduce each in a test or script, fix the real ones with the
    smallest change, reword requirements that claimed too much, and note what you leave and why.
-7. **Full regression.** Typecheck, all unit tests, all e2e tests (and the dark/other projects), the list checker.
+7. **Full regression, once per round.** While implementing and triaging, run only the tests the change can break (the
+   project's affected-tests command, `vitest related`, or the e2e specs of the touched pages); the full set is for the
+   end of the round. If the full set takes long, make it faster before cutting it: a production build instead of a
+   dev server for e2e, more workers than cores when tests wait on timers, short test-only timeouts, cached parsed
+   fixtures; merge tests that open the same page for the same requirement. Then:
+   Typecheck, all unit tests, all e2e tests (and the dark/other projects), the list checker.
    Run them as separate commands so one red step does not skip the rest. Everything green except the documented
    baseline failures. Read the checkers' problem lines, not only their totals: a list checker can print correct
    counts and still report "listed twice" or "claims it - set it to yes" below them.
