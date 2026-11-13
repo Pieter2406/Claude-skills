@@ -1,113 +1,121 @@
 ---
 name: improve-loop
-description: Improve an existing app in rounds - review it, test it, fix and improve it, document it, commit and push, then go again - until the user stops or nothing worth doing is left. Each round reviews the running app (screenshots of every page, light and dark), runs the full test suite as a baseline, picks the most valuable work towards the user's goals (bugs first, then UX/UI, polish, new features, restructuring, a characteristic look, more complete product data and images), implements it with tests and docs, gets an independent code review of the round's diff, fixes what the review confirms, reruns everything and pushes. Use it whenever the user asks to "loop", "keep improving", "review test improve document", "continue loop", "nog een ronde", "blijf verbeteren", "maak het af", or gives a list of goals for an app and expects repeated rounds of work rather than one change. Not for a single bug or feature (use the project's own bug/feature skill or just do it), and not for releasing to production (use review-test-deploy).
+description: Improve an existing app in repeated, verified rounds. Each round reviews the app through three lenses (a UX/UI review, feature improvements, a code review), ranks the findings, makes the few changes that matter most, proves them with tests and screenshots, commits, and logs the round in the project so the next round (or session) continues where this one stopped. Use it whenever Pieter says "improve loop", "/improve-loop", "keep improving the app", "do a round of improvements", "review and improve", "polish the app", "what should we improve next?", "verbeter de app", "maak het beter", "doe een verbeterronde", or asks for a UX review, feature ideas and a code review in one go. Works on any app with a repo (web apps first); it never deploys unless asked. For a single security audit use app-security-review; for shipping a finished change use review-test-deploy or cf-deploy.
 ---
 
-# Improve loop: review, test, improve, document, push - and again
+# Improve loop
 
-The user names an app and goals ("improve UX/UI, make it bug free, polish, add features, characteristic look,
-remove what is out of place, more complete product data and images"). Work in **rounds**. A round is small enough to
-finish, test and push in one go, and ends with everything committed and pushed and a short report. Then start the
-next round when the user says "continue loop" (or keep going if they asked for several rounds at once).
+An app gets better through many small, proven changes, each chosen because it matters more than the alternatives.
+This skill is that routine: **look** (three lenses), **choose** (few, ranked), **change** (small), **prove** (tests,
+screenshots), **record** (so the next round starts informed), then go round again.
 
-Keep the user posted in one line per phase. Never leave work uncommitted at the end of a turn.
+Keep the user posted in one line per phase. The user's words narrow the loop: "improve loop on the practice screen"
+limits every lens to that screen; "improve loop, code only" runs one lens; "3 rounds" sets the count.
 
-## 0. Ground rules
+## Ground rules
 
-- **The persona sets the goal.** Look for the project's persona file: `docs/doelgroep.md`, `docs/persona.md`,
-  or whatever CLAUDE.md or the README names. Read it at the start of **every** round, not only the first: it says
-  who uses the app, what they know and don't, and what "better" means for them. Every round then carries at least
-  one item that serves that persona, screenshots are read with that user's eyes, and the reviewer gets the persona
-  too. If the user describes their audience or a goal and there is no such file yet, write one with
-  `references/persona-template.md`, point CLAUDE.md at it and commit it, so the next loop starts from it.
-- **Take on the domain expertise the persona needs.** When the persona asks for it (an electrical code, a
-  protocol, a trade), review as that expert explaining to a layperson: find what is already encoded in the
-  project (docs, rule code, research reports) before adding anything; verify every rule, number and article
-  against the primary source and record the source; when unsure, leave it out or call it a rule of thumb.
-- **The project's own rules win.** Read CLAUDE.md, README and the project's skills first. If the project has a
-  feature list or a bug/feature skill (for example `knx-feature` / `knx-bug` with `docs/features.md`), every change in
-  the loop goes through it: requirements first, tests that claim them, the list checker green.
-- **Never test against production or the user's own running instance** (ports, data files, live projects). Run
-  a separate instance on other ports with a write-restricted copy of the data, as the project's e2e config does.
-- **Branch and push rules** come from the session: develop on the given branch, commit with the attribution lines,
-  `git push -u origin <branch>` with retries on network errors. No pull request unless asked.
-- **Product data you add must be real.** Verify every order number, spec and image against a shop or manufacturer
-  page; record where it came from; never invent numbers. Say when a value comes only from shop data.
-- **Report faithfully.** Pre-existing failures stay labelled as such (with the reason); your own regressions get fixed.
+- **Small rounds.** A round changes 3–6 things and ends with a green test suite and a commit. Never one giant diff.
+- **Evidence over opinion.** Every finding has evidence (a screenshot, a measurement, a file and line, a failing
+  case) and every fix has proof (a test, a before/after screenshot, a number that moved).
+- **The owner decides the big things.** Fix freely what is clearly broken or clearly better. Ask first (one question,
+  with your recommendation) before: removing a feature, changing how a core task works, a new dependency, a data or
+  schema change, anything that costs money, or more than about half a day of work. New features are proposed, not
+  built, unless they are small and obviously wanted, or the user said to build.
+- **Don't deploy or merge** unless the user asked in this conversation. Commit and push to the working branch.
+- **The project's rules win** (CLAUDE.md, README, style guides, test conventions). Keep its look, tone and structure.
+- **Use what exists.** If an `app-ux` skill is installed, the UX lens follows it (its checklist IDs and audit
+  script). If a code-review or security-review skill is installed, the code lens may use it. Don't duplicate them.
 
-## 1. First round only: know the app and the baseline
+## 0. Start: context and the log
 
-1. Read the docs and the code structure; list the pages/screens and the core tasks.
-2. Install and run the full suite (typecheck, unit, e2e, any list/consistency checker). Write down the counts and
-   which failures were already there and why (missing cache, live data, environment). This is the baseline.
-3. Start a review instance and screenshot every page in light and dark at the app's main size (and the sizes it
-   claims to support). Look at all of them. Note bugs, clutter, inconsistencies, missing states.
-4. If the goals need research (products, standards, data, images), start **one background research agent now**
-   with a precise brief (`references/briefs.md`) so it runs while you work on other things.
-5. Create a task list for the round.
+1. Read the project notes (CLAUDE.md, README) and `git log --oneline -20`: what the app is, who uses it, where, on
+   what devices; how to build, test and run it; recent work.
+2. Open the loop's log, `docs/improve-loop.md` in the project (create it from `references/log-format.md` if
+   missing). It holds the **core tasks**, the **backlog** of open findings, and one entry per **round**. Findings
+   from earlier rounds are not re-discovered: re-check the open ones and carry on.
+3. Collect what the owner already said: open issues, TODOs, feedback the app stores (ratings, comments, bug
+   reports), and anything from this conversation. The owner's own complaints outrank anything you find.
+4. Write (or confirm) the 3–5 **core tasks**: what people come to this app to do. Every finding is judged against
+   them.
+5. Run the tests and the build once. Red before you change anything → that is finding number one.
 
-## 2. Every round
+## 1. Look: three lenses
 
-1. **Pick the work.** From the persona, the screenshots, the audit, the previous review, the user's goals and the backlog
-   (`--todo` of the feature list, open findings), choose a handful of items by value: correctness bugs, then what
-   the user named as focus, then UX/a11y problems, then polish and new features. Prefer removing and restructuring
-   over adding. Say what you picked in one line.
-2. **Measure what can be measured.** For UI rounds run the `app-ux` audit script (with axe-core) on the main pages
-   and fix the real failures: names on fields, contrast in both themes, target sizes, tablist/ARIA misuse,
-   reduced motion. Lock fixes in with e2e tests so they stay fixed.
-3. **Implement each item through the project's process**: requirement rows, logic in the platform-free core, UI on
-   top, unit tests for the logic, e2e tests for what a user does. Reproduce a bug in a failing test before fixing it.
-   When a test fails, first suspect the test (fixture, overlapping rooms, missing element), then the app.
-   Tests must be able to fail: no assertions behind `if (await x.count())`, no checks that hold whatever the app does
-   (an optional group in a regex, `>=` the old value, only the first of n rows). When the test data lacks the case,
-   create it in the test. For every bug fix, remove the fix once and watch its test fail, then put it back.
-4. **Look at the result.** Screenshot the changed screens (light and dark) and read them. Fix what looks wrong:
-   clipped text, spacing, a font feature with side effects, contrast.
-5. **Independent review.** Start a background reviewer agent on the round's diff (`git diff <last pushed>..` or the
-   working tree) with `references/briefs.md` › Reviewer. Don't share your hypotheses. While it runs, close test gaps
-   or do the next small item - not the same files.
-6. **Triage the review.** Its findings are claims: reproduce each in a test or script, fix the real ones with the
-   smallest change, reword requirements that claimed too much, and note what you leave and why.
-7. **Full regression, once per round.** While implementing and triaging, run only the tests the change can break (the
-   project's affected-tests command, `vitest related`, or the e2e specs of the touched pages); the full set is for the
-   end of the round. If the full set takes long, make it faster before cutting it: a production build instead of a
-   dev server for e2e, more workers than cores when tests wait on timers, short test-only timeouts, cached parsed
-   fixtures; merge tests that open the same page for the same requirement. Then:
-   Typecheck, all unit tests, all e2e tests (and the dark/other projects), the list checker.
-   Run them as separate commands so one red step does not skip the rest. Everything green except the documented
-   baseline failures. Read the checkers' problem lines, not only their totals: a list checker can print correct
-   counts and still report "listed twice" or "claims it - set it to yes" below them.
-8. **Document.** Feature list rows, glossary terms, README usage lines, the product/data sources doc, and a review
-   log (`docs/review-<date>.md`) with a table per round: number, severity, problem, fix, requirement IDs.
-9. **Commit and push.** One commit per round (or per review fix-up), a message that lists what changed and why.
-   Clean up temporary data copies first. Check `git status` is clean afterwards. If the reviewer is still running at
-   the end of a turn, commit and push what is green now and put its fixes in a follow-up commit.
-   Also check the tests clean up after themselves (no test copies piling up in data folders).
-10. **Report** (see below) and offer the next round with two or three concrete candidates.
+Run the app locally and look at the real thing; read the code second. Details and checklists per lens are in
+`references/lenses.md`. With a subagent tool available, run the three lenses in parallel as independent reviewers
+(findings only, no edits), each given the core tasks, the scope and the open backlog; otherwise do them in turn.
 
-## What a good round contains
+| Lens | Question | Evidence |
+|---|---|---|
+| **UX/UI** | Can people do the core tasks quickly, on their real device, without thinking? | screenshots at phone and desktop size, the audit script's measurements, a task walk-through with taps counted |
+| **Features** | What is missing, half-finished or unused that would make a core task better? | where a task dead-ends or needs a workaround, the owner's feedback, what similar apps do |
+| **Code** | What is wrong, fragile or needlessly complicated in the code behind those tasks? | file and line, a failing input, a missing test, duplicated logic, a slow path with a timing |
 
-- At least one thing the user can see or use that was not there (a feature, a page that reads better, data).
-- Every new behaviour has a requirement and tests; every fixed bug has a regression test.
-- Nothing pre-existing got worse: the test counts only go up, the baseline failures are the same ones.
-- Real data with sources when the goal is completeness (products, images, standards): images resized to what the
-  UI shows (about 400 px), licence/source recorded in an index, a script that can rebuild them without losing
-  entries it could not fetch this time.
-- When giving an app a characteristic look: name and logo that fit its domain, colour tokens defined once with a
-  dark-mode variant and an `--on-accent` text colour, contrast checked in both themes, no global font features that
-  change punctuation, the change locked in with an e2e test of the header and title.
+Each finding, in one line each: **what** (screen or file), **why it matters** (which core task, how often),
+**evidence**, **severity** 1–4 (4 = blocks a core task or loses data, 3 = hurts a core task every time, 2 = hurts
+sometimes or looks wrong, 1 = polish), **effort** S/M/L, and a proposed change.
 
-## Report (short, in the user's language)
+## 2. Choose
 
-- what changed this round, grouped (new, fixed, from the review), each in one plain line;
-- what it means for the user's own data where that is interesting (e.g. "your garden detector only covers 40 %");
-- test results with counts, and the baseline failures named once with their reason;
-- where it is documented, and that it is pushed (branch);
-- what is left on purpose, and two or three candidates for the next round.
+1. Merge duplicates across lenses: one finding per root cause (a cluttered screen and a 600-line file are often the
+   same problem).
+2. Rank by severity × how often the task happens ÷ effort. Order of ties: bugs and data loss, then core-task
+   friction, then missing pieces of existing features, then code health that makes the next rounds cheaper, then
+   polish, then new features.
+3. Pick this round's batch: 3–6 items that fit together (same screen or same module), at least one visible to the
+   user and at least one that makes the code safer to change. Everything else goes in the backlog with its rank.
+4. If the batch contains anything from "the owner decides", ask now, once, with the list and your recommendation.
+   Otherwise say in two lines what this round will do, and start.
+
+## 3. Change
+
+One item at a time, the smallest change that removes the cause:
+
+- reproduce first (a failing test, a screenshot, a measurement), then fix;
+- prefer removing and moving over adding; reuse the app's own components, helpers and words;
+- a new behaviour gets a test at the cheapest level that proves it; a UI rule that could regress gets one too;
+- keep unrelated refactors out: note them as findings for a later round.
+
+## 4. Prove
+
+- The full test suite, type check, linter and build: green.
+- For each visible change: before and after screenshots at the sizes people use, looked at, not just taken. Rerun
+  the UX audit if one was run.
+- For each code change: the test that fails without it; for performance, the number before and after.
+- Walk the core tasks once more through the real entry points: nothing else broke.
+
+A change that can't be proven is reverted or moved back to the backlog with what blocked it.
+
+## 5. Record and commit
+
+1. Update `docs/improve-loop.md`: the round (date, scope, what changed and its proof, what was dropped and why), the
+   backlog re-ranked, and "next round: start with …".
+2. Update the project notes where behaviour or structure changed (CLAUDE.md, README), in their style.
+3. Commit with a clear message per coherent change (or one for the round), following the repo's rules, and push the
+   working branch.
+
+## 6. Go round again, or stop
+
+Start the next round at step 1 with fresh eyes on the changed app (the last round's changes are the first thing to
+review: did they create new problems?). Default: **2 rounds**, or the number the user gave. Stop earlier when:
+
+- nothing above severity 2 is left in scope;
+- the remaining top items all need the owner's decision;
+- a round produced no change that could be proven;
+- the tests or the build are red for a reason you can't fix in the round.
+
+## 7. Report
+
+Short, in the user's language, most important first:
+
+- what changed for the user, one plain line each, with the proof (screenshot, test, number);
+- what changed in the code and why it makes the next change easier;
+- decisions waiting for the owner, each with a recommendation;
+- the top 5 of the backlog: what the next round would do;
+- where it is (branch, commits) and that nothing is deployed, unless the user asked for a deploy.
 
 ## Files
 
-- [`references/briefs.md`](references/briefs.md) - the prompts for the research agent and the reviewer agent, and
-  the screenshot script pattern.
-- [`references/persona-template.md`](references/persona-template.md) - the shape of a project persona file, and the
-  questions a round asks with it.
+- [`references/lenses.md`](references/lenses.md): what each lens looks at, how to collect evidence, the prompt for a
+  parallel reviewer.
+- [`references/log-format.md`](references/log-format.md): the template of `docs/improve-loop.md`.
